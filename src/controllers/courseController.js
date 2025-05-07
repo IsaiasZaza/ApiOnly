@@ -430,6 +430,122 @@ const removeCursoDoUser = async ({ userId, courseId }) => {
     }
 };
 
+const addQuestionToCourse  = async ({ courseId, title, options, answer  }) => {
+    try {
+        const course = await prisma.course.findUnique({ where: { id: parseInt(courseId, 10) } });
+        if (!course) {
+            return {
+                status: 404,
+                data: { message: "Curso não encontrado" },
+            };
+        }
+
+        const question = await prisma.question.create({
+            data: {
+                title,
+                options,
+                answer,
+                courseId: parseInt(courseId, 10),
+            },
+        });
+
+        return {
+            status: 200,
+            data: { message: "Pergunta adicionada ao curso com sucesso!", question },
+        };
+    } catch (error) {
+        console.error(`Erro ao adicionar pergunta ao curso: ${error.message}`);
+        return {
+            status: 500,
+            data: { message: "Erro ao adicionar pergunta ao curso" },
+        };
+    }
+}
+
+const listarPerguntasDoCurso = async ({ courseId }) => {
+    try {
+        const course = await prisma.course.findUnique({ where: { id: parseInt(courseId, 10) } });
+        if (!course) {
+            return {
+                status: 404,
+                data: { message: "Curso não encontrado" },
+            };
+        }
+
+        const questions = await prisma.question.findMany({
+            where: { courseId: parseInt(courseId, 10) },
+        });
+
+        return {
+            status: 200,
+            data: questions,
+        };
+    } catch (error) {
+        console.error(`Erro ao listar perguntas do curso: ${error.message}`);
+        return {
+            status: 500,
+            data: { message: "Erro ao listar perguntas do curso" },
+        };
+    }
+}
+
+const updateQuestion = async ({ questionId, title, options, answer }) => {
+    try {
+        const question = await prisma.question.findUnique({ where: { id: parseInt(questionId, 10) } });
+        if (!question) {
+            return {
+                status: 404,
+                data: { message: "Pergunta não encontrada" },
+            };
+        }
+
+        const updatedQuestion = await prisma.question.update({
+            where: { id: parseInt(questionId, 10) },
+            data: {
+                ...(title && { title }),
+                ...(options && { options }),
+                ...(answer && { answer }),
+            },
+        });
+
+        return {
+            status: 200,
+            data: { message: "Pergunta atualizada com sucesso!", question: updatedQuestion },
+        };
+    } catch (error) {
+        console.error(`Erro ao atualizar pergunta: ${error.message}`);
+        return {
+            status: 500,
+            data: { message: "Erro ao atualizar pergunta" },
+        };
+    }
+}
+
+const deleteQuestion = async ({ questionId }) => {
+    try {
+        const question = await prisma.question.findUnique({ where: { id: parseInt(questionId, 10) } });
+        if (!question) {
+            return {
+                status: 404,
+                data: { message: "Pergunta não encontrada" },
+            };
+        }
+
+        await prisma.question.delete({ where: { id: parseInt(questionId, 10) } });
+
+        return {
+            status: 200,
+            data: { message: "Pergunta deletada com sucesso!" },
+        };
+    } catch (error) {
+        console.error(`Erro ao deletar pergunta: ${error.message}`);
+        return {
+            status: 500,
+            data: { message: "Erro ao deletar pergunta" },
+        };
+    }
+}
+
 module.exports = {
     createCourse,
     getCourses,
@@ -440,5 +556,9 @@ module.exports = {
     addCursoAoUser,
     removeCursoDoUser,
     createSTRIPECheckoutSession,
-    addCursoStripeAoUser
+    addCursoStripeAoUser,
+    addQuestionToCourse,
+    listarPerguntasDoCurso,
+    updateQuestion,
+    deleteQuestion,
 };

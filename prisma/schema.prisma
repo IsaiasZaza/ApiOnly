@@ -27,25 +27,26 @@ model User {
   profilePicture String?
   createdAt      DateTime   @default(now())
   cpf            String     @unique // CPF único
-  profissao      String    // Profissão do usuário
+  profissao      String // Profissão do usuário
   purchases      Purchase[]
   courses        Course[]   @relation("UserCourses")
 }
 
 model Course {
-  id          Int     @id @default(autoincrement())
-  title       String
-  description String
-  price       Float
-  videoUrl    String? // URL ou caminho do vídeo (opcional)
-  coverImage  String? // URL ou caminho da imagem de capa (opcional)
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
-  purchases   Purchase[]
-  users       User[]     @relation("UserCourses")
+  id             Int        @id @default(autoincrement())
+  title          String
+  description    String
+  price          Float
+  videoUrl       String? // URL ou caminho do vídeo (opcional)
+  coverImage     String? // URL ou caminho da imagem de capa (opcional)
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+  purchases      Purchase[]
+  users          User[]     @relation("UserCourses")
   parentCourseId Int? // ID do curso pai, opcional
-  parentCourse   Course?  @relation("SubCourses", fields: [parentCourseId], references: [id])
-  subCourses     Course[] @relation("SubCourses")
+  parentCourse   Course?    @relation("SubCourses", fields: [parentCourseId], references: [id])
+  subCourses     Course[]   @relation("SubCourses")
+  Question       Question[]
 }
 
 model Purchase {
@@ -64,10 +65,22 @@ model Ebook {
   id          Int      @id @default(autoincrement())
   title       String
   description String
-  autor      String
+  autor       String
   fileUrl     String
-  price       String?  // URL do arquivo do eBook para download
+  price       String? // URL do arquivo do eBook para download
   imageEbook  String? // URL da imagem de capa (opcional)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+}
+
+model Question {
+  id        Int      @id @default(autoincrement())
+  title     String // Enunciado da pergunta
+  options   String[] // Alternativas
+  answer    String // Resposta correta
+  courseId  Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  course Course @relation(fields: [courseId], references: [id])
 }

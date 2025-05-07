@@ -20,8 +20,11 @@ const authenticateUser = require('./middlewares/authMiddlewares');
 const { ERROR_MESSAGES, HTTP_STATUS_CODES } = require('./utils/enum');
 const { createCourse, getCourses, getCourseById,
     updateCourse, deleteCourse, createCourseWithSubcourses, createSTRIPECheckoutSession,
-    addCursoAoUser, addCursoStripeAoUser }
-    = require('./controllers/courseController');
+    addCursoAoUser, addCursoStripeAoUser,
+    addQuestionToCourse,
+    listarPerguntasDoCurso,
+    updateQuestion,
+    deleteQuestion } = require('./controllers/courseController');
 const { createEbook, getAllEbooks, getEbookById, updateEbook, deleteEbook } = require('./controllers/ebookController');
 const router = express.Router();
 const stripe = require('stripe')
@@ -32,23 +35,50 @@ const { generateCertificate } = require('./controllers/certificateController')
 
 require('dotenv').config();
 
+router.post('/pergunta', async (req, res) => {
+    const { courseId, question } = req.body;
+    const { title, options, answere } = question; // Adicionei a extração de title e answer aqui
+    const { status, data } = await addQuestionToCourse({ title, options, courseId, question, answer: answere });
+    return res.status(status).json(data);
+});
+
+router.get('/perguntas/:courseId', async (req, res) => {
+    const { courseId } = req.params;
+    const { status, data } = await listarPerguntasDoCurso({ courseId });
+    return res.status(status).json(data);
+});
+
+router.put('/pergunta/:id', async (req, res) => {
+    const { id } = req.params;
+    const { question } = req.body;
+    const { status, data } = await updateQuestion({ id, question });
+    return res.status(status).json(data);
+});
+
+router.delete('/pergunta/:id', async (req, res) => {
+    const { id } = req.params;
+    const { status, data } = await deleteQuestion({ id });
+    return res.status(status).json(data);
+});
+
+
 router.post('/certificado', async (req, res) => {
     const { studentName, courseName } = req.body;
-  
+
     if (!studentName || !courseName) {
-      return res.status(400).json({ message: 'studentName e courseName são obrigatórios.' });
+        return res.status(400).json({ message: 'studentName e courseName são obrigatórios.' });
     }
-  
+
     try {
-      const pdfData = await generateCertificate(studentName, courseName);
-      res.setHeader('Content-Type', 'application/pdf');
-      res.setHeader('Content-Disposition', 'attachment; filename=certificate.pdf');
-      return res.status(200).send(pdfData);
+        const pdfData = await generateCertificate(studentName, courseName);
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', 'attachment; filename=certificate.pdf');
+        return res.status(200).send(pdfData);
     } catch (error) {
-      console.error('Erro ao gerar certificado:', error.message);
-      return res.status(500).json({ message: 'Erro interno no servidor.' });
+        console.error('Erro ao gerar certificado:', error.message);
+        return res.status(500).json({ message: 'Erro interno no servidor.' });
     }
-  });
+});
 
 router.post('/webhook', async (request, response) => {
     const sig = request.headers['stripe-signature'];
