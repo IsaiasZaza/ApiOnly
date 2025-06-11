@@ -32,8 +32,80 @@ const STRIPE = new stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: '2020-08-
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient()
 const { generateCertificate } = require('./controllers/certificateController')
+const { MercadoPagoConfig, Preference, Payment } = require('mercadopago');
 
+
+const client = new MercadoPagoConfig({
+    accessToken: 'APP_USR-6595130337209466-051020-0376863cb45c4d8612ddcc9f565ea131-2427821890'
+});
+const payment = new Payment(client);
 require('dotenv').config();
+
+router.post('/checkout', async (req, res) => {
+    try {
+        const { courseId, userId } = req.body;
+
+        if (!userId || !courseId) {
+            return res.status(400).json({ message: 'userId e courseId são obrigatórios.' });
+        }
+
+        const existingPurchase = await prisma.purchase.findFirst({
+            where: {
+                userId: Number(userId),
+                courseId: Number(courseId),
+                status: 'approved',
+            },
+        });
+
+
+        if (existingPurchase) {
+            return res.status(400).json({ message: 'Você já comprou este curso.' });
+        }
+
+        const course = await prisma.course.findUnique({
+            where: { id: Number(courseId) },
+        });
+
+        if (!course) {
+            return res.status(404).json({ message: 'Curso não encontrado.' });
+        }
+
+
+        // Criação de uma nova preferência de pagamento
+        const preference = new Preference(client);
+
+        const response = await preference.create({
+            body: {
+                items: [
+                    {
+                        title: course.title,
+                        unit_price: course.price,
+                        description: course.description,
+                        quantity: 1,
+                    },
+                ],
+                metadata: {
+                    userId: String(userId),
+                    courseId: String(courseId),
+                },
+                back_urls: {
+                    success: `${process.env.CLIENT_URL}/success?courseId=${courseId}&userId=${userId}`,
+                    failure: `${process.env.CLIENT_URL}/cancel`,
+                    pending: `${process.env.CLIENT_URL}/cancel`,
+                },
+                auto_return: 'approved',
+                external_reference: JSON.stringify({ courseId, userId }),
+                notification_url: 'https://crud-usuario.vercel.app/api/webhook/mercadopago',
+            }
+        })
+
+        // Retorna a URL de pagamento para o front-end
+        res.status(200).json({ init_point: response.init_point });
+    } catch (error) {
+        console.error('Erro ao criar preferência:', error.message || error);
+        return res.status(500).json({ error: 'Erro ao criar preferência de pagamento', details: error.message || error });
+    }
+});
 
 router.post('/pergunta', async (req, res) => {
     const { courseId, question } = req.body;
