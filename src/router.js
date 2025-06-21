@@ -9,12 +9,10 @@ const {
     loginUser,
     forgotPassword,
     resetPassword,
-    updateProfilePicture,
     addProfilePicture,
     removeProfilePicture,
     logoutUser,
     removeCursoDoUser,
-    upload,
 } = require('./controllers/userController');
 const authenticateUser = require('./middlewares/authMiddlewares');
 const { ERROR_MESSAGES, HTTP_STATUS_CODES } = require('./utils/enum');
@@ -25,20 +23,17 @@ const { createCourse, getCourses, getCourseById,
     listarPerguntasDoCurso,
     updateQuestion,
     deleteQuestion } = require('./controllers/courseController');
-const { createEbook, getAllEbooks, getEbookById, updateEbook, deleteEbook } = require('./controllers/ebookController');
 const router = express.Router();
-const stripe = require('stripe')
-const STRIPE = new stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: '2020-08-27' });
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient()
 const { generateCertificate } = require('./controllers/certificateController')
 const { MercadoPagoConfig, Preference, Payment } = require('mercadopago');
 
-
 const client = new MercadoPagoConfig({
     accessToken: 'APP_USR-6595130337209466-051020-0376863cb45c4d8612ddcc9f565ea131-2427821890'
 });
 const payment = new Payment(client);
+
 require('dotenv').config();
 
 router.post('/checkout', async (req, res) => {
@@ -202,40 +197,6 @@ router.post('/webhook', async (request, response) => {
     response.status(200).json({ received: true });
 });
 
-
-router.post('/checkout', async (req, res) => {
-    // Extraia os parâmetros com os nomes corretos
-    const { courseId, userId } = req.body;
-
-    const { status, data } = await createSTRIPECheckoutSession({ courseId, userId });
-    return res.status(status).json(data);
-});
-
-router.post('/ebook', async (req, res) => {
-    const result = await createEbook(req.body);
-    res.status(result.status).json(result.data);
-})
-
-router.get('/ebooks', async (req, res) => {
-    const result = await getAllEbooks();
-    res.status(result.status).json(result.data);
-});
-
-router.put('/ebook/:id', async (req, res) => {
-    const result = await updateEbook({ id: req.params.id, ...req.body });
-    res.status(result.status).json(result.data);
-});
-
-router.delete('/ebook/:id', async (req, res) => {
-    const result = await deleteEbook(req.params);
-    res.status(result.status).json(result.data);
-});
-
-router.get('/ebook/:id', async (req, res) => {
-    const result = await getEbookById(req.params);
-    res.status(result.status).json(result.data);
-});
-
 router.post('/adicionarCurso', async (req, res) => {
     const result = await addCursoAoUser(req.body);
     res.status(result.status).json(result.data);
@@ -265,26 +226,26 @@ router.get('/users', async (req, res) => {
     return res.status(status).json(data);
 });
 
-router.get('/user/:id', authenticateUser, async (req, res) => {
+router.get('/user/:id', async (req, res) => {
     const { id } = req.params;
     const { status, data } = await getUserById({ id });
     return res.status(status).json(data);
 });
 
-router.put('/user/:id', authenticateUser, async (req, res) => {
+router.put('/user/:id', async (req, res) => {
     const { id } = req.params;
     const { nome, email, sobre, estado, cpf, profissao } = req.body;
     const { status, data } = await updateUser({ id, nome, email, sobre, estado, cpf, profissao });
     return res.status(status).json(data);
 });
 
-router.delete('/user/:id', authenticateUser, async (req, res) => {
+router.delete('/user/:id', async (req, res) => {
     const { id } = req.params;
     const { status, data } = await deleteUser({ id });
     return res.status(status).json(data);
 });
 
-router.put('/user/:id/change-password', authenticateUser, async (req, res) => {
+router.put('/user/:id/change-password', async (req, res) => {
     const { id } = req.params;
     const { senhaAtual, novaSenha } = req.body;
 
@@ -383,17 +344,6 @@ router.post('/courses', async (req, res) => {
             message: 'Erro ao criar curso e subcursos.',
         });
     }
-});
-
-router.put('/user/:id/profile-picture', upload, async (req, res) => {
-    const { id } = req.params;
-
-    if (!req.file) {
-        return res.status(400).json({ message: 'Nenhuma imagem foi enviada.' });
-    }
-
-    const { status, data } = await updateProfilePicture(id, `/uploads/${req.file.filename}`);
-    return res.status(status).json(data);
 });
 
 router.delete('/user/:id/profile-picture', async (req, res) => {

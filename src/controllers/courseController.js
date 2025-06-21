@@ -1,5 +1,4 @@
-const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
+const prisma = require('../lib/prisma');
 const { HTTP_STATUS_CODES, ERROR_MESSAGES, SUCCESS_MESSAGES } = require('../utils/enum');
 const Stripe = require('stripe');
 
@@ -59,14 +58,12 @@ const createSTRIPECheckoutSession = async ({ courseId, userId }) => {
             },
         });
 
-        console.log(session)
 
         return {
             status: 200,
             data: { sessionId: session.id },
         };
     } catch (error) {
-        console.error(`Erro ao criar sessão de checkout: ${error.message}`);
         return {
             status: 500,
             data: { message: "Erro ao criar sessão de checkout" },
@@ -121,7 +118,6 @@ const addCursoStripeAoUser = async ({ userId, courseId }) => {
             data: { message: "Curso adicionado ao usuário com sucesso!" },
         };
     } catch (error) {
-        console.error(`Erro ao adicionar curso ao usuário: ${error.message}`);
         return {
             status: 500,
             data: { message: "Erro ao adicionar curso ao usuário" },
@@ -176,7 +172,6 @@ const addCursoAoUser = async ({ userId, courseId }) => {
             data: { message: "Curso adicionado ao usuário com sucesso!" },
         };
     } catch (error) {
-        console.error(`Erro ao adicionar curso ao usuário: ${error.message}`);
         return {
             status: 500,
             data: { message: "Erro ao adicionar curso ao usuário" },
@@ -204,7 +199,6 @@ const createCourse = async ({ title, description, price, videoUrl, coverImage })
             },
         };
     } catch (error) {
-        console.error('Erro ao criar curso:', error.message);
         return {
             status: HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR,
             data: { message: ERROR_MESSAGES.ERROR_CREAT_COURSE },
@@ -257,7 +251,6 @@ const createCourseWithSubcourses = async ({ title, description, price, videoUrl,
             },
         };
     } catch (error) {
-        console.error('Erro ao criar curso e subcursos:', error.message);
         return {
             status: HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR,
             data: { message: ERROR_MESSAGES.ERROR_CREAT_COURSE_WITH_SUBCOURSES },
@@ -276,7 +269,6 @@ const getCourses = async () => {
             data: courses,
         };
     } catch (error) {
-        console.error('Erro ao buscar cursos:', error.message);
         return {
             status: HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR,
             data: { message: ERROR_MESSAGES.ERROR_FETCH_COURSES },
@@ -304,7 +296,6 @@ const getCourseById = async ({ id }) => {
             data: course,
         };
     } catch (error) {
-        console.error('Erro ao buscar curso por ID:', error.message);
         return {
             status: HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR,
             data: { message: ERROR_MESSAGES.ERROR_FETCH_COURSE },
@@ -334,7 +325,6 @@ const updateCourse = async ({ id, title, description, price, videoUrl, coverImag
             },
         };
     } catch (error) {
-        console.error('Erro ao atualizar curso:', error.message);
         return {
             status: HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR,
             data: { message: ERROR_MESSAGES.ERROR_UPDATE_COURSE },
@@ -367,7 +357,6 @@ const deleteCourse = async ({ id }) => {
             data: { message: SUCCESS_MESSAGES.COURSE_DELETED },
         };
     } catch (error) {
-        console.error('Erro ao deletar curso:', error.message);
         return {
             status: HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR,
             data: { message: ERROR_MESSAGES.ERROR_DELETE_COURSE },
@@ -422,7 +411,6 @@ const removeCursoDoUser = async ({ userId, courseId }) => {
             data: { message: "Curso removido do usuário com sucesso!" },
         };
     } catch (error) {
-        console.error(`Erro ao remover curso do usuário: ${error.message}`);
         return {
             status: 500,
             data: { message: "Erro ao remover curso do usuário" },
@@ -454,7 +442,6 @@ const addQuestionToCourse  = async ({ courseId, title, options, answer  }) => {
             data: { message: "Pergunta adicionada ao curso com sucesso!", question },
         };
     } catch (error) {
-        console.error(`Erro ao adicionar pergunta ao curso: ${error.message}`);
         return {
             status: 500,
             data: { message: "Erro ao adicionar pergunta ao curso" },
@@ -481,7 +468,6 @@ const listarPerguntasDoCurso = async ({ courseId }) => {
             data: questions,
         };
     } catch (error) {
-        console.error(`Erro ao listar perguntas do curso: ${error.message}`);
         return {
             status: 500,
             data: { message: "Erro ao listar perguntas do curso" },
@@ -513,7 +499,6 @@ const updateQuestion = async ({ questionId, title, options, answer }) => {
             data: { message: "Pergunta atualizada com sucesso!", question: updatedQuestion },
         };
     } catch (error) {
-        console.error(`Erro ao atualizar pergunta: ${error.message}`);
         return {
             status: 500,
             data: { message: "Erro ao atualizar pergunta" },
@@ -538,7 +523,6 @@ const deleteQuestion = async ({ questionId }) => {
             data: { message: "Pergunta deletada com sucesso!" },
         };
     } catch (error) {
-        console.error(`Erro ao deletar pergunta: ${error.message}`);
         return {
             status: 500,
             data: { message: "Erro ao deletar pergunta" },

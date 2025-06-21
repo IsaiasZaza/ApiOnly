@@ -1,40 +1,12 @@
-const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
+const prisma = require('../lib/prisma');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 const SALT_ROUNDS = 10;
 const { generateToken } = require('../services/jwtService');
 const nodemailer = require('nodemailer');
-const multer = require('multer');
-const path = require('path');
-const fs = require('fs');
-const redis = require('redis');
-const client = redis.createClient();
+const client = require('../lib/redis');
 require('dotenv').config();
 
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-        const uploadDir = 'uploads/';
-        if (!fs.existsSync(uploadDir)) {
-            fs.mkdirSync(uploadDir, { recursive: true });
-        }
-        cb(null, uploadDir);
-    },
-    filename: (req, file, cb) => {
-        const uniqueName = `${Date.now()}-${file.originalname}`;
-        cb(null, uniqueName);
-    }
-});
-
-const upload = multer({
-    storage,
-    limits: { fileSize: 2 * 1024 * 1024 }, // Limite de 2MB por imagem
-    fileFilter: (req, file, cb) => {
-        const allowedTypes = /jpeg|jpg|png/;
-        const isValidType = allowedTypes.test(path.extname(file.originalname).toLowerCase()) && allowedTypes.test(file.mimetype);
-        isValidType ? cb(null, true) : cb(new Error('Apenas imagens JPEG, JPG e PNG são permitidas.'));
-    }
-}).single('profilePicture'); // Recebe apenas um arquivo por vez
 
 const { ERROR_MESSAGES, HTTP_STATUS_CODES, SUCCESS_MESSAGES } = require('../utils/enum');
 const { removeCursoDoUser } = require('./courseController');
@@ -46,7 +18,7 @@ const logoutUser = async (req, res) => {
         return res.status(401).json({ message: 'Token não fornecido' });
     }
 
-    client.setEx(token, 3600, 'revoked'); // Expira o token após 1 hora
+    client.setEx(token, 3600, 'revoked'); 
 
     return res.status(200).json({ message: 'Logout realizado com sucesso' });
 };
@@ -139,7 +111,6 @@ const createUser = async ({ nome, email, senha, role = 'ALUNO', cpf, profissao }
             },
         };
     } catch (error) {
-        console.error('Erro ao criar usuário:', error.message);
         return {
             status: HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR,
             data: { message: ERROR_MESSAGES.ERROR_CREAT_USER },
@@ -168,14 +139,6 @@ const loginUser = async ({ email, senha, role }) => {
             return {
                 status: HTTP_STATUS_CODES.BAD_REQUEST,
                 data: { message: ERROR_MESSAGES.INVALID_REQUESTED_ROLE },
-            };
-        }
-
-        // Verifica se o usuário tem a role solicitada
-        if (user.role !== role) {
-            return {
-                status: HTTP_STATUS_CODES.FORBIDDEN,
-                data: { message: ERROR_MESSAGES.ROLE_NOT_ALLOWED },
             };
         }
 
@@ -212,7 +175,6 @@ const loginUser = async ({ email, senha, role }) => {
             },
         };
     } catch (error) {
-        console.error('Erro ao fazer login:', error.message);
         return {
             status: HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR,
             data: { message: ERROR_MESSAGES.ERROR_LOGIN },
@@ -259,7 +221,6 @@ const changeUserPassword = async ({ id, senhaAtual, novaSenha }) => {
             data: { message: SUCCESS_MESSAGES.SUCCESS_PASSWORD_CHANGED },
         };
     } catch (error) {
-        console.error('Erro ao trocar senha:', error.message);
         return {
             status: HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR,
             data: { message: ERROR_MESSAGES.ERROR_USER_OR_PASSWORD },
@@ -277,7 +238,6 @@ const getUsers = async () => {
 
         return { status: HTTP_STATUS_CODES.OK, data: usersWithoutPassword };
     } catch (error) {
-        console.error('Erro ao buscar usuários:', error.message);
         return {
             status: HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR,
             data: { message: ERROR_MESSAGES.USERS_NOT_EXIST },
@@ -309,7 +269,6 @@ const getUserById = async ({ id }) => {
             }
         };
     } catch (error) {
-        console.error('Erro ao buscar usuário por ID:', error.message);
         return {
             status: HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR,
             data: { message: ERROR_MESSAGES.USER_NOT_ID },
@@ -377,7 +336,6 @@ const updateUser = async ({
             },
         };
     } catch (error) {
-        console.error("Erro ao atualizar usuário:", error.message);
         return {
             status: HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR,
             data: { message: ERROR_MESSAGES.USER_NOT_UPDATE },
@@ -396,7 +354,6 @@ const deleteUser = async ({ id }) => {
         };
 
     } catch (error) {
-        console.error('Erro ao deletar usuário:', error.message);
         return {
             status: HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR,
             data: { message: ERROR_MESSAGES.ERROR_INTERNAL_SERVER },
@@ -513,7 +470,6 @@ const updateProfilePicture = async (id, filePath) => {
             },
         };
     } catch (error) {
-        console.error('Erro ao atualizar a foto de perfil:', error);
         return {
             status: HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR,
             data: { message: ERROR_MESSAGES.ERROR_INTERNAL_SERVER },
@@ -541,7 +497,6 @@ const removeProfilePicture = async ({ id }) => {
             },
         };
     } catch (error) {
-        console.error('Erro ao remover foto de perfil:', error.message);
         return {
             status: HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR,
             data: { message: ERROR_MESSAGES.ERROR_UPDATING_USER },
@@ -568,7 +523,6 @@ const addProfilePicture = async ({ id, profilePicture }) => {
             },
         };
     } catch (error) {
-        console.error('Erro ao adicionar foto de perfil:', error.message);
         return {
             status: HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR,
             data: { message: ERROR_MESSAGES.ERROR_UPDATING_USER },
@@ -591,5 +545,4 @@ module.exports = {
     addProfilePicture,
     logoutUser,
     removeCursoDoUser,
-    upload,
 };
