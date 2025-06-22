@@ -214,7 +214,7 @@ const changeUserPassword = async ({ id, senhaAtual, novaSenha }) => {
         if (await bcrypt.compare(novaSenha, user.senha)) {
             return {
                 status: HTTP_STATUS_CODES.BAD_REQUEST,
-                data: { message: ERROR_MESSAGES.ERROR_ERROR_PASSWORD_EQUAL },
+                data: { message: ERROR_MESSAGES.ERROR_PASSWORD_EQUAL },
             };
         }
 
