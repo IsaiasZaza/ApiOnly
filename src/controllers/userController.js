@@ -18,7 +18,7 @@ const logoutUser = async (req, res) => {
         return res.status(401).json({ message: 'Token não fornecido' });
     }
 
-    client.setEx(token, 3600, 'revoked'); 
+    client.setEx(token, 3600, 'revoked');
 
     return res.status(200).json({ message: 'Logout realizado com sucesso' });
 };
@@ -73,7 +73,7 @@ const createUser = async ({ nome, email, senha, role = 'ALUNO', cpf, profissao }
                 senha: hashedPassword,
                 role: role.toUpperCase(),
                 estado: 'Brasília-DF',
-                sobre: 'Bem-vindo(a) à Cetma',
+                sobre: 'Bem-vindo(a) à ONLY',
                 profilePicture: '',
                 cpf,
                 profissao
@@ -202,10 +202,19 @@ const changeUserPassword = async ({ id, senhaAtual, novaSenha }) => {
             };
         }
 
+        // validação extra
+        if (!novaSenha || novaSenha.length < 6) {
+            return {
+                status: HTTP_STATUS_CODES.BAD_REQUEST,
+                data: { message: 'A nova senha deve ter no mínimo 6 caracteres.' },
+            };
+        }
+
+        // nova senha igual à atual
         if (await bcrypt.compare(novaSenha, user.senha)) {
             return {
                 status: HTTP_STATUS_CODES.BAD_REQUEST,
-                data: { message: ERROR_MESSAGES.ERROR_USER_OR_PASSWORD },
+                data: { message: ERROR_MESSAGES.ERROR_ERROR_PASSWORD_EQUAL },
             };
         }
 
@@ -221,12 +230,14 @@ const changeUserPassword = async ({ id, senhaAtual, novaSenha }) => {
             data: { message: SUCCESS_MESSAGES.SUCCESS_PASSWORD_CHANGED },
         };
     } catch (error) {
+        console.error('Erro ao mudar senha:', error);
         return {
             status: HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR,
-            data: { message: ERROR_MESSAGES.ERROR_USER_OR_PASSWORD },
+            data: { message: 'Erro interno ao tentar mudar a senha.' },
         };
     }
 };
+
 
 const getUsers = async () => {
     try {

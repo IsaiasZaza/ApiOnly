@@ -7,6 +7,7 @@ const ERROR_MESSAGES = {
     USER_ERROR_EMAIL: 'Já existe um usuário com este email.',
     FILDS_INVALID: 'Todos os campos obrigatórios devem ser fornecidos.',
     ERROR_USER_OR_PASSWORD: 'Credenciais inválidas.',
+    ERROR_PASSWORD_EQUAL: 'A senha atual não pode ser igual à nova senha.',
     USER_DELETED: 'Usuário excluído com sucesso.',
     ERROR_INTERNAL_SERVER: 'Erro interno no servidor.',
     NOT_AUTHORIZED: 'Não autorizado.',
