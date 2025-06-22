@@ -349,8 +349,28 @@ const deleteCourse = async ({ id }) => {
             });
         }
 
+    
+
+        await prisma.question.deleteMany({
+            where: { courseId: courseId }
+        });
+
+        if (!courseId) {
+            return {
+                status: HTTP_STATUS_CODES.BAD_REQUEST,
+                data: { message: ERROR_MESSAGES.INVALID_COURSE_ID },
+            };
+        }
+
+        if(courseId === 0) {
+            return {
+                status: HTTP_STATUS_CODES.BAD_REQUEST,
+                data: { message: ERROR_MESSAGES.COURSE_ID_ZERO },
+            };
+        }
         // Agora deleta o curso principal
         await prisma.course.delete({ where: { id: courseId } });
+
 
         return {
             status: HTTP_STATUS_CODES.NO_CONTENT,
