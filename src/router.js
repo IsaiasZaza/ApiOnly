@@ -54,7 +54,7 @@ router.post('/checkout', async (req, res) => {
 
 
         if (existingPurchase) {
-            return res.status(400).json({ message: 'Você já comprou este curso.' });
+            return res.status(400).json({ message: 'Você já comprou estee curso.' });
         }
 
         const course = await prisma.course.findUnique({
